@@ -1,0 +1,3305 @@
+{
+  "expo": {
+    "name": "DoramaFlix",
+    "slug": "doramaflix",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "doramaflix",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/favicon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.doramaflix.app",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.doramaflix.app",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.WAKE_LOCK"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "doramaflix"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "server",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-secure-store",
+        {}
+      ],
+      "expo-video"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}{
+  "name": "bolt-expo-starter",
+  "main": "expo-router/entry",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "EXPO_NO_TELEMETRY=1 expo start",
+    "build:web": "expo export --platform web",
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@lucide/lab": "^0.1.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/bottom-tabs": "^7.2.0",
+    "@react-navigation/native": "^7.0.14",
+    "@supabase/supabase-js": "^2.58.0",
+    "expo": "^54.0.10",
+    "expo-audio": "~1.0.13",
+    "expo-blur": "~15.0.7",
+    "expo-camera": "~17.0.8",
+    "expo-constants": "~18.0.9",
+    "expo-font": "~14.0.8",
+    "expo-haptics": "~15.0.7",
+    "expo-linear-gradient": "~15.0.7",
+    "expo-linking": "~8.0.8",
+    "expo-router": "~6.0.8",
+    "expo-screen-orientation": "^9.0.7",
+    "expo-secure-store": "^15.0.7",
+    "expo-splash-screen": "~31.0.10",
+    "expo-status-bar": "~3.0.8",
+    "expo-symbols": "~1.0.7",
+    "expo-system-ui": "~6.0.7",
+    "expo-video": "~3.0.11",
+    "expo-web-browser": "~15.0.7",
+    "hls.js": "^1.6.13",
+    "lucide-react-native": "^0.544.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.4",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-reanimated": "~4.1.1",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
+    "react-native-url-polyfill": "^2.0.0",
+    "react-native-web": "^0.21.0",
+    "react-native-webview": "13.15.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~19.1.10",
+    "@types/react-native": "^0.72.8",
+    "typescript": "~5.9.2"
+  }
+}
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
+  ]
+}
+// lib/iptvApi.ts
+const API_URL = 'https://api.pxbetapp.win';
+
+export interface IPTVSeries {
+  series_id: string;
+  name: string;
+  cover?: string;
+  genre?: string;
+  releaseDate?: string;
+  plot?: string;
+  cast?: string;
+  director?: string;
+  rating?: string;
+  backdrop_path?: string[];
+  num_seasons?: number;
+}
+
+export interface IPTVSeason {
+  season_number: number;
+  name: string;
+  episode_count: number;
+  overview?: string;
+  air_date?: string;
+  cover?: string;
+}
+
+export interface IPTVEpisode {
+  id: string;
+  episode_num: number;
+  title: string;
+  container_extension: string;
+  info?: {
+    duration?: string;
+    plot?: string;
+    rating?: string;
+  };
+  season?: number;
+}
+
+export interface IPTVSeriesInfo {
+  info: IPTVSeries;
+  seasons: IPTVSeason[];
+  episodes: { [seasonNumber: string]: IPTVEpisode[] };
+}
+
+export interface IPTVCredentials {
+  username: string;
+  password: string;
+}
+
+class IPTVApi {
+  private credentials: IPTVCredentials | null = null;
+
+  setCredentials(username: string, password: string) {
+    this.credentials = { username, password };
+  }
+
+  clearCredentials() {
+    this.credentials = null;
+  }
+
+  getCredentials(): IPTVCredentials | null {
+    return this.credentials;
+  }
+
+  private async apiRequest(action: string, params: Record<string, string> = {}): Promise<any> {
+    if (!this.credentials) {
+      throw new Error('Credenciais não configuradas');
+    }
+
+    const url = new URL(`${API_URL}/player_api.php`);
+    url.searchParams.set('username', this.credentials.username);
+    url.searchParams.set('password', this.credentials.password);
+    url.searchParams.set('action', action);
+
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
+
+    try {
+      const response = await fetch(url.toString());
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Erro na API IPTV:', error);
+      throw error;
+    }
+  }
+
+  // Autenticar usuário (valida se as credenciais funcionam)
+  async authenticate(username: string, password: string): Promise<boolean> {
+    this.setCredentials(username, password);
+    
+    try {
+      // Tenta buscar as séries para validar credenciais
+      await this.apiRequest('get_series');
+      return true;
+    } catch (error) {
+      this.clearCredentials();
+      return false;
+    }
+  }
+
+  // Buscar todas as séries
+  async getSeries(): Promise<IPTVSeries[]> {
+    const data = await this.apiRequest('get_series');
+    return Array.isArray(data) ? data : Object.values(data);
+  }
+
+  // Buscar informações detalhadas de uma série
+  async getSeriesInfo(seriesId: string): Promise<IPTVSeriesInfo> {
+    const data = await this.apiRequest('get_series_info', { series_id: seriesId });
+    return data;
+  }
+
+  // Gerar URL do stream HLS
+  getStreamUrl(episodeId: string): string {
+    if (!this.credentials) {
+      throw new Error('Credenciais não configuradas');
+    }
+
+    return `${API_URL}/hls/${this.credentials.username}/${this.credentials.password}/${episodeId}/index.m3u8`;
+  }
+
+  // Buscar categorias (se a API suportar)
+  async getCategories(): Promise<any[]> {
+    try {
+      const data = await this.apiRequest('get_series_categories');
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.warn('API não suporta categorias:', error);
+      return [];
+    }
+  }
+}
+
+// Singleton
+export const iptvApi = new IPTVApi();// contexts/IPTVAuthContext.tsx
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { iptvApi, IPTVCredentials } from '@/lib/iptvApi';
+
+interface IPTVAuthContextType {
+  isAuthenticated: boolean;
+  credentials: IPTVCredentials | null;
+  loading: boolean;
+  signIn: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signOut: () => Promise<void>;
+}
+
+const IPTVAuthContext = createContext<IPTVAuthContextType | undefined>(undefined);
+
+const CREDENTIALS_KEY = '@doramaflix:iptv_credentials';
+
+export function IPTVAuthProvider({ children }: { children: React.ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [credentials, setCredentials] = useState<IPTVCredentials | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Carregar credenciais salvas ao iniciar
+  useEffect(() => {
+    loadSavedCredentials();
+  }, []);
+
+  const loadSavedCredentials = async () => {
+    try {
+      const saved = await AsyncStorage.getItem(CREDENTIALS_KEY);
+      if (saved) {
+        const creds: IPTVCredentials = JSON.parse(saved);
+        
+        // Validar se as credenciais ainda funcionam
+        const isValid = await iptvApi.authenticate(creds.username, creds.password);
+        
+        if (isValid) {
+          setCredentials(creds);
+          setIsAuthenticated(true);
+        } else {
+          // Credenciais inválidas, limpar
+          await AsyncStorage.removeItem(CREDENTIALS_KEY);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar credenciais:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signIn = async (username: string, password: string) => {
+    try {
+      const isValid = await iptvApi.authenticate(username, password);
+      
+      if (!isValid) {
+        return { 
+          success: false, 
+          error: 'Usuário ou senha incorretos' 
+        };
+      }
+
+      const creds: IPTVCredentials = { username, password };
+      
+      // Salvar credenciais
+      await AsyncStorage.setItem(CREDENTIALS_KEY, JSON.stringify(creds));
+      
+      setCredentials(creds);
+      setIsAuthenticated(true);
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao fazer login:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Erro ao conectar com o servidor' 
+      };
+    }
+  };
+
+  const signOut = async () => {
+    await AsyncStorage.removeItem(CREDENTIALS_KEY);
+    iptvApi.clearCredentials();
+    setCredentials(null);
+    setIsAuthenticated(false);
+  };
+
+  return (
+    <IPTVAuthContext.Provider 
+      value={{ 
+        isAuthenticated, 
+        credentials, 
+        loading, 
+        signIn, 
+        signOut 
+      }}
+    >
+      {children}
+    </IPTVAuthContext.Provider>
+  );
+}
+
+export function useIPTVAuth() {
+  const context = useContext(IPTVAuthContext);
+  if (context === undefined) {
+    throw new Error('useIPTVAuth must be used within an IPTVAuthProvider');
+  }
+  return context;
+}// hooks/useContinueWatching.ts
+import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIPTVAuth } from '@/contexts/IPTVAuthContext';
+import { iptvApi, IPTVSeries, IPTVSeriesInfo } from '@/lib/iptvApi';
+
+const CONTINUE_WATCHING_KEY = '@doramaflix:continue_watching';
+const WATCH_PROGRESS_KEY = '@doramaflix:watch_progress';
+
+export interface ContinueWatchingItem {
+  seriesId: string;
+  seriesName: string;
+  seriesCover: string;
+  episodeId: string;
+  episodeTitle: string;
+  seasonNumber: number;
+  episodeNumber: number;
+  progress: number; // porcentagem 0-100
+  timestamp: number;
+  duration: number; // em segundos
+  currentTime: number; // em segundos
+}
+
+export function useContinueWatching() {
+  const { credentials } = useIPTVAuth();
+  const [items, setItems] = useState<ContinueWatchingItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadContinueWatching();
+  }, [credentials]);
+
+  const loadContinueWatching = async () => {
+    if (!credentials) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const key = `${CONTINUE_WATCHING_KEY}_${credentials.username}`;
+      const saved = await AsyncStorage.getItem(key);
+      
+      if (saved) {
+        const data: ContinueWatchingItem[] = JSON.parse(saved);
+        // Ordenar por timestamp (mais recente primeiro)
+        const sorted = data
+          .filter(item => item.progress < 95) // Não mostrar episódios completos
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .slice(0, 10); // Limitar a 10 itens
+        
+        setItems(sorted);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar continue assistindo:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addOrUpdateItem = useCallback(async (
+    seriesId: string,
+    seriesName: string,
+    seriesCover: string,
+    episodeId: string,
+    episodeTitle: string,
+    seasonNumber: number,
+    episodeNumber: number,
+    currentTime: number,
+    duration: number
+  ) => {
+    if (!credentials) return;
+
+    try {
+      const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+      
+      // Não adicionar se progresso < 5%
+      if (progress < 5) {
+        return;
+      }
+
+      const key = `${CONTINUE_WATCHING_KEY}_${credentials.username}`;
+      const saved = await AsyncStorage.getItem(key);
+      let data: ContinueWatchingItem[] = saved ? JSON.parse(saved) : [];
+
+      // Remover item antigo do MESMO EPISÓDIO (não da série inteira!)
+      data = data.filter(item => item.episodeId !== episodeId);
+
+      // Se progresso >= 95%, não adiciona (episódio completo)
+      if (progress < 95) {
+        // Adicionar novo item
+        const newItem: ContinueWatchingItem = {
+          seriesId,
+          seriesName,
+          seriesCover,
+          episodeId,
+          episodeTitle,
+          seasonNumber,
+          episodeNumber,
+          progress,
+          timestamp: Date.now(),
+          duration,
+          currentTime,
+        };
+
+        data.unshift(newItem);
+      }
+
+      // Remover duplicatas da mesma série (manter apenas o mais recente)
+      const seriesMap = new Map<string, ContinueWatchingItem>();
+      data.forEach(item => {
+        if (!seriesMap.has(item.seriesId)) {
+          seriesMap.set(item.seriesId, item);
+        }
+      });
+      data = Array.from(seriesMap.values());
+
+      // Limitar a 10 séries diferentes
+      data = data.slice(0, 10);
+
+      await AsyncStorage.setItem(key, JSON.stringify(data));
+      
+      // Recarregar imediatamente
+      await loadContinueWatching();
+    } catch (error) {
+      console.error('Erro ao atualizar continue assistindo:', error);
+    }
+  }, [credentials]);
+
+  const removeItem = useCallback(async (episodeId: string) => {
+    if (!credentials) return;
+
+    try {
+      const key = `${CONTINUE_WATCHING_KEY}_${credentials.username}`;
+      const saved = await AsyncStorage.getItem(key);
+      
+      if (saved) {
+        let data: ContinueWatchingItem[] = JSON.parse(saved);
+        data = data.filter(item => item.episodeId !== episodeId);
+        await AsyncStorage.setItem(key, JSON.stringify(data));
+        await loadContinueWatching();
+      }
+    } catch (error) {
+      console.error('Erro ao remover item:', error);
+    }
+  }, [credentials]);
+
+  const clearAll = useCallback(async () => {
+    if (!credentials) return;
+
+    try {
+      const key = `${CONTINUE_WATCHING_KEY}_${credentials.username}`;
+      await AsyncStorage.removeItem(key);
+      setItems([]);
+    } catch (error) {
+      console.error('Erro ao limpar continue assistindo:', error);
+    }
+  }, [credentials]);
+
+  return {
+    items,
+    loading,
+    addOrUpdateItem,
+    removeItem,
+    clearAll,
+    refresh: loadContinueWatching,
+  };
+}// hooks/usePlatform.ts
+import { useState, useEffect } from 'react';
+import { Platform, Dimensions } from 'react-native';
+import Constants from 'expo-constants';
+
+export interface PlatformInfo {
+  isWeb: boolean;
+  isAndroid: boolean;
+  isIOS: boolean;
+  isTV: boolean;
+  isMobile: boolean;
+  isTablet: boolean;
+  screenWidth: number;
+  screenHeight: number;
+}
+
+export function usePlatform(): PlatformInfo {
+  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setDimensions(window);
+    });
+
+    return () => subscription?.remove();
+  }, []);
+
+  const isWeb = Platform.OS === 'web';
+  const isAndroid = Platform.OS === 'android';
+  const isIOS = Platform.OS === 'ios';
+  
+  // Detectar Android TV
+  const isTV = Platform.isTV || 
+    (isAndroid && Constants.deviceName?.toLowerCase().includes('tv')) ||
+    (isAndroid && dimensions.width >= 1280 && dimensions.height >= 720);
+
+  const screenWidth = dimensions.width;
+  const screenHeight = dimensions.height;
+
+  // Detectar tablet vs mobile
+  const isTablet = !isTV && (
+    (screenWidth >= 768 && !isWeb) ||
+    (Platform.isPad !== undefined && Platform.isPad)
+  );
+
+  const isMobile = !isTV && !isTablet;
+
+  return {
+    isWeb,
+    isAndroid,
+    isIOS,
+    isTV,
+    isMobile,
+    isTablet,
+    screenWidth,
+    screenHeight,
+  };
+}
+
+// Função helper para obter estilos responsivos
+export function getResponsiveValue<T>(
+  platform: PlatformInfo,
+  values: {
+    mobile?: T;
+    tablet?: T;
+    tv?: T;
+    web?: T;
+    default: T;
+  }
+): T {
+  if (platform.isTV && values.tv !== undefined) return values.tv;
+  if (platform.isTablet && values.tablet !== undefined) return values.tablet;
+  if (platform.isMobile && values.mobile !== undefined) return values.mobile;
+  if (platform.isWeb && values.web !== undefined) return values.web;
+  return values.default;
+}import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import { Play, Pause, SkipForward, Volume2, VolumeX } from 'lucide-react-native';
+import { Episode, UserPreferences } from '@/types/database';
+
+interface VideoPlayerProps {
+  episode: Episode;
+  preferences: UserPreferences;
+  initialProgress?: number;
+  onProgressUpdate: (seconds: number) => void;
+  onComplete: () => void;
+  onNextEpisode?: () => void;
+  hasNextEpisode?: boolean;
+}
+
+export default function VideoPlayer({
+  episode,
+  preferences,
+  initialProgress = 0,
+  onProgressUpdate,
+  onComplete,
+  onNextEpisode,
+  hasNextEpisode,
+}: VideoPlayerProps) {
+  const [showControls, setShowControls] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showSkipIntro, setShowSkipIntro] = useState(false);
+  const [showSkipOutro, setShowSkipOutro] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Criar o player de vídeo
+  const player = useVideoPlayer(episode.video_url, (player) => {
+    player.loop = false;
+    player.muted = false;
+    player.play();
+  });
+
+  // Configurar position inicial
+  useEffect(() => {
+    if (player && initialProgress > 0) {
+      player.currentTime = initialProgress;
+    }
+  }, [initialProgress]);
+
+  // Listener para status do player
+  useEffect(() => {
+    if (!player) return;
+
+    const statusListener = player.addListener('statusChange', (status) => {
+      setIsLoading(!status.isPlaying && status.isBuffering);
+      
+      if (status.error) {
+        console.error('Video error:', status.error);
+      }
+    });
+
+    const playingListener = player.addListener('playingChange', ({ isPlaying }) => {
+      if (isPlaying) {
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      statusListener.remove();
+      playingListener.remove();
+    };
+  }, [player]);
+
+  // Listener para progresso e tempo
+  useEffect(() => {
+    if (!player) return;
+
+    const timeUpdateInterval = setInterval(() => {
+      const time = player.currentTime;
+      const dur = player.duration;
+      
+      setCurrentTime(time);
+      setDuration(dur);
+
+      if (time > 0) {
+        const currentSeconds = Math.floor(time);
+        onProgressUpdate(currentSeconds);
+
+        // Auto skip intro
+        if (preferences.auto_skip_intro && episode.intro_start && episode.intro_end) {
+          if (currentSeconds >= episode.intro_start && currentSeconds < episode.intro_end) {
+            setShowSkipIntro(true);
+          } else {
+            setShowSkipIntro(false);
+          }
+        }
+
+        // Auto skip outro
+        if (preferences.auto_skip_outro && episode.outro_start) {
+          if (currentSeconds >= episode.outro_start) {
+            setShowSkipOutro(true);
+          } else {
+            setShowSkipOutro(false);
+          }
+        }
+
+        // Verificar se terminou
+        if (dur > 0 && time >= dur - 1) {
+          onComplete();
+          if (preferences.auto_play_next && hasNextEpisode && onNextEpisode) {
+            setTimeout(() => {
+              onNextEpisode();
+            }, 2000);
+          }
+        }
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(timeUpdateInterval);
+    };
+  }, [player, preferences, episode, onProgressUpdate, onComplete, hasNextEpisode, onNextEpisode]);
+
+  // Auto-hide controls
+  useEffect(() => {
+    if (showControls && player?.playing) {
+      if (controlsTimeout.current) {
+        clearTimeout(controlsTimeout.current);
+      }
+      controlsTimeout.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+
+    return () => {
+      if (controlsTimeout.current) {
+        clearTimeout(controlsTimeout.current);
+      }
+    };
+  }, [showControls, player?.playing]);
+
+  const togglePlayPause = () => {
+    if (player) {
+      if (player.playing) {
+        player.pause();
+      } else {
+        player.play();
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    if (player) {
+      player.muted = !player.muted;
+    }
+  };
+
+  const skipIntro = () => {
+    if (player && episode.intro_end) {
+      player.currentTime = episode.intro_end;
+      setShowSkipIntro(false);
+    }
+  };
+
+  const skipToNext = () => {
+    if (onNextEpisode) {
+      onNextEpisode();
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <Pressable
+      style={styles.container}
+      onPress={() => setShowControls(!showControls)}
+    >
+      <VideoView
+        player={player}
+        style={styles.video}
+        allowsFullscreen={false}
+        allowsPictureInPicture={false}
+        nativeControls={false}
+      />
+
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
+
+      {showControls && (
+        <View style={styles.controls}>
+          <View style={styles.topControls}>
+            <Text style={styles.episodeTitle}>
+              Ep {episode.episode_number}: {episode.title}
+            </Text>
+          </View>
+
+          <View style={styles.centerControls}>
+            <Pressable onPress={togglePlayPause} style={styles.playButton}>
+              {player?.playing ? (
+                <Pause size={48} color="#fff" fill="#fff" />
+              ) : (
+                <Play size={48} color="#fff" fill="#fff" />
+              )}
+            </Pressable>
+          </View>
+
+          <View style={styles.bottomControls}>
+            <Text style={styles.timeText}>
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </Text>
+
+            <View style={styles.controlButtons}>
+              <Pressable onPress={toggleMute} style={styles.controlButton}>
+                {player?.muted ? (
+                  <VolumeX size={24} color="#fff" />
+                ) : (
+                  <Volume2 size={24} color="#fff" />
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {showSkipIntro && (
+        <Pressable style={styles.skipButton} onPress={skipIntro}>
+          <Text style={styles.skipText}>Pular Introdução</Text>
+        </Pressable>
+      )}
+
+      {showSkipOutro && hasNextEpisode && (
+        <Pressable style={styles.skipButton} onPress={skipToNext}>
+          <SkipForward size={20} color="#fff" />
+          <Text style={styles.skipText}>Próximo Episódio</Text>
+        </Pressable>
+      )}
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  controls: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  topControls: {
+    padding: 16,
+  },
+  episodeTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  centerControls: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bottomControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  timeText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  controlButtons: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  controlButton: {
+    padding: 8,
+  },
+  skipButton: {
+    position: 'absolute',
+    bottom: 80,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 4,
+    gap: 8,
+  },
+  skipText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+});// components/WebVideoPlayer.tsx - Player HLS para Web
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw } from 'lucide-react-native';
+
+interface WebVideoPlayerProps {
+  url: string;
+  initialTime?: number;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
+  onEnded?: () => void;
+  onError?: (error: string) => void;
+}
+
+export default function WebVideoPlayer({
+  url,
+  initialTime = 0,
+  onTimeUpdate,
+  onEnded,
+  onError,
+}: WebVideoPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const initPlayer = async () => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      // Verificar se precisa de HLS.js
+      if (url.includes('.m3u8')) {
+        // Importar HLS.js dinamicamente
+        const Hls = (await import('hls.js')).default;
+
+        if (Hls.isSupported()) {
+          const hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: false,
+            backBufferLength: 90,
+          });
+
+          hls.loadSource(url);
+          hls.attachMedia(video);
+
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            setIsLoading(false);
+            if (initialTime > 0) {
+              video.currentTime = initialTime;
+            }
+            video.play().catch(console.error);
+          });
+
+          hls.on(Hls.Events.ERROR, (event, data) => {
+            console.error('HLS Error:', data);
+            if (data.fatal) {
+              switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  onError?.('Erro de rede ao carregar o vídeo');
+                  hls.startLoad();
+                  break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  onError?.('Erro de mídia');
+                  hls.recoverMediaError();
+                  break;
+                default:
+                  onError?.('Erro fatal ao reproduzir vídeo');
+                  hls.destroy();
+                  break;
+              }
+            }
+          });
+
+          hlsRef.current = hls;
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          // Safari nativo
+          video.src = url;
+          video.addEventListener('loadedmetadata', () => {
+            setIsLoading(false);
+            if (initialTime > 0) {
+              video.currentTime = initialTime;
+            }
+            video.play().catch(console.error);
+          });
+        } else {
+          onError?.('HLS não suportado neste navegador');
+        }
+      } else {
+        // Vídeo direto (MP4, etc)
+        video.src = url;
+        video.addEventListener('loadedmetadata', () => {
+          setIsLoading(false);
+          if (initialTime > 0) {
+            video.currentTime = initialTime;
+          }
+          video.play().catch(console.error);
+        });
+      }
+    };
+
+    initPlayer();
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+      }
+    };
+  }, [url]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      const time = video.currentTime;
+      const dur = video.duration;
+      setCurrentTime(time);
+      setDuration(dur);
+      onTimeUpdate?.(time, dur);
+    };
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => {
+      setIsPlaying(false);
+      onEnded?.();
+    };
+    const handleWaiting = () => setIsLoading(true);
+    const handleCanPlay = () => setIsLoading(false);
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('ended', handleEnded);
+    video.addEventListener('waiting', handleWaiting);
+    video.addEventListener('canplay', handleCanPlay);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('waiting', handleWaiting);
+      video.removeEventListener('canplay', handleCanPlay);
+    };
+  }, []);
+
+  // Auto-hide controls
+  useEffect(() => {
+    if (showControls && isPlaying) {
+      if (controlsTimeout.current) clearTimeout(controlsTimeout.current);
+      controlsTimeout.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+    return () => {
+      if (controlsTimeout.current) clearTimeout(controlsTimeout.current);
+    };
+  }, [showControls, isPlaying]);
+
+  const togglePlayPause = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (isPlaying) {
+      video.pause();
+    } else {
+      video.play();
+    }
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setIsMuted(video.muted);
+  };
+
+  const seekForward = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = Math.min(video.currentTime + 10, duration);
+  };
+
+  const seekBackward = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = Math.max(video.currentTime - 10, 0);
+  };
+
+  const seekTo = (percent: number) => {
+    const video = videoRef.current;
+    if (!video || duration === 0) return;
+    video.currentTime = (duration * percent) / 100;
+  };
+
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return h > 0
+      ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+      : `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <View style={styles.container}>
+      <Pressable
+        style={styles.videoContainer}
+        onPress={() => setShowControls(!showControls)}
+      >
+        <video
+          ref={videoRef}
+          style={{
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#000',
+          }}
+          playsInline
+          controlsList="nodownload"
+        />
+
+        {showControls && (
+          <View style={styles.controls}>
+            <View style={styles.centerControls}>
+              <Pressable onPress={seekBackward} style={styles.seekButton}>
+                <RotateCcw size={32} color="#fff" />
+                <Text style={styles.seekText}>10s</Text>
+              </Pressable>
+
+              <Pressable onPress={togglePlayPause} style={styles.playButton}>
+                {isPlaying ? (
+                  <Pause size={56} color="#fff" fill="#fff" />
+                ) : (
+                  <Play size={56} color="#fff" fill="#fff" />
+                )}
+              </Pressable>
+
+              <Pressable onPress={seekForward} style={styles.seekButton}>
+                <RotateCw size={32} color="#fff" />
+                <Text style={styles.seekText}>10s</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.bottomControls}>
+              <Pressable
+                style={styles.progressBarContainer}
+                onPress={(e: any) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const percent = (x / rect.width) * 100;
+                  seekTo(percent);
+                }}
+              >
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+                </View>
+              </Pressable>
+
+              <View style={styles.controlRow}>
+                <Text style={styles.timeText}>
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </Text>
+
+                <Pressable onPress={toggleMute} style={styles.controlButton}>
+                  {isMuted ? <VolumeX size={24} color="#fff" /> : <Volume2 size={24} color="#fff" />}
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <Text style={styles.loadingText}>Carregando...</Text>
+          </View>
+        )}
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  videoContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  controls: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'space-between',
+  },
+  centerControls: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 48,
+  },
+  seekButton: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  seekText: {
+    color: '#fff',
+    fontSize: 12,
+  },
+  playButton: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bottomControls: {
+    padding: 16,
+    gap: 12,
+  },
+  progressBarContainer: {
+    width: '100%',
+    paddingVertical: 8,
+    cursor: 'pointer',
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#e50914',
+  },
+  controlRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timeText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  controlButton: {
+    padding: 8,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+});// components/ResumeDialog.tsx
+import React from 'react';
+import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
+import { Play, RotateCcw } from 'lucide-react-native';
+
+interface ResumeDialogProps {
+  visible: boolean;
+  episodeNumber: number;
+  seasonNumber: number;
+  episodeTitle: string;
+  progress: number; // porcentagem 0-100
+  onResume: () => void;
+  onRestart: () => void;
+  onCancel: () => void;
+}
+
+export default function ResumeDialog({
+  visible,
+  episodeNumber,
+  seasonNumber,
+  episodeTitle,
+  progress,
+  onResume,
+  onRestart,
+  onCancel,
+}: ResumeDialogProps) {
+  const formatProgress = (percent: number) => {
+    const minutes = Math.floor((percent / 100) * 100); // Estimativa
+    return `${Math.floor(percent)}% assistido`;
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+    >
+      <Pressable style={styles.overlay} onPress={onCancel}>
+        <Pressable style={styles.dialog} onPress={(e) => e.stopPropagation()}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Continuar Assistindo?</Text>
+          </View>
+
+          <View style={styles.content}>
+            <Text style={styles.episodeInfo}>
+              Temporada {seasonNumber} • Episódio {episodeNumber}
+            </Text>
+            <Text style={styles.episodeTitle} numberOfLines={2}>
+              {episodeTitle}
+            </Text>
+            <Text style={styles.progressText}>{formatProgress(progress)}</Text>
+
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${progress}%` }]} />
+            </View>
+          </View>
+
+          <View style={styles.buttons}>
+            <Pressable style={styles.restartButton} onPress={onRestart}>
+              <RotateCcw size={20} color="#fff" />
+              <Text style={styles.restartText}>Reiniciar</Text>
+            </Pressable>
+
+            <Pressable style={styles.resumeButton} onPress={onResume}>
+              <Play size={20} color="#fff" fill="#fff" />
+              <Text style={styles.resumeText}>Continuar</Text>
+            </Pressable>
+          </View>
+
+          <Pressable style={styles.cancelButton} onPress={onCancel}>
+            <Text style={styles.cancelText}>Cancelar</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dialog: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    width: '85%',
+    maxWidth: 400,
+    overflow: 'hidden',
+  },
+  header: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  content: {
+    padding: 20,
+  },
+  episodeInfo: {
+    color: '#999',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  episodeTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  progressText: {
+    color: '#e50914',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#333',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#e50914',
+  },
+  buttons: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 12,
+  },
+  restartButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#333',
+    paddingVertical: 14,
+    borderRadius: 6,
+    gap: 8,
+  },
+  restartText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  resumeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#e50914',
+    paddingVertical: 14,
+    borderRadius: 6,
+    gap: 8,
+  },
+  resumeText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  cancelButton: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+  },
+  cancelText: {
+    color: '#999',
+    fontSize: 14,
+  },
+});import { useEffect } from 'react';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { IPTVAuthProvider } from '@/contexts/IPTVAuthContext';
+
+export default function RootLayout() {
+  useFrameworkReady();
+
+  return (
+    <IPTVAuthProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="auth/login" />
+        <Stack.Screen name="dorama/[id]" />
+        <Stack.Screen name="player" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <StatusBar style="light" />
+    </IPTVAuthProvider>
+  );
+}// app/player.tsx - VERSÃO MELHORADA
+import React, { useEffect, useState, useRef } from 'react';
+import { 
+  View, StyleSheet, ActivityIndicator, Text, Pressable, 
+  BackHandler, Platform, StatusBar, Dimensions 
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { 
+  ChevronLeft, Play, Pause, Volume2, VolumeX, 
+  Maximize, SkipForward, RotateCw, RotateCcw 
+} from 'lucide-react-native';
+import { iptvApi, IPTVSeriesInfo, IPTVEpisode } from '@/lib/iptvApi';
+import { useIPTVAuth } from '@/contexts/IPTVAuthContext';
+import { useContinueWatching } from '@/hooks/useContinueWatching';
+import { usePlatform } from '@/hooks/usePlatform';
+
+export default function PlayerScreen() {
+  const {
+    episodeId, seriesId, seasonNumber, episodeNumber, title, progress
+  } = useLocalSearchParams<{
+    episodeId: string;
+    seriesId: string;
+    seasonNumber: string;
+    episodeNumber: string;
+    title: string;
+    progress: string;
+  }>();
+
+  const router = useRouter();
+  const { credentials } = useIPTVAuth();
+  const { addOrUpdateItem } = useContinueWatching();
+  const platform = usePlatform();
+  
+  const [videoUrl, setVideoUrl] = useState('');
+  const [showControls, setShowControls] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(true);
+  const [seriesInfo, setSeriesInfo] = useState<IPTVSeriesInfo | null>(null);
+  const [nextEpisode, setNextEpisode] = useState<IPTVEpisode | null>(null);
+  const [showNextEpisode, setShowNextEpisode] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+
+  const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
+  const progressSaveInterval = useRef<NodeJS.Timeout | null>(null);
+  const player = useVideoPlayer(videoUrl || 'about:blank', (player) => {
+    if (!videoUrl) return;
+    player.loop = false;
+    player.muted = false;
+    if (progress && parseInt(progress) > 0) {
+      player.currentTime = parseInt(progress);
+    }
+    player.play();
+  });
+
+  // Configurar orientação para mobile
+  useEffect(() => {
+    let isMounted = true;
+
+    const setupOrientation = async () => {
+      if (platform.isMobile && !platform.isWeb && isMounted) {
+        try {
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+          StatusBar.setHidden(true);
+        } catch (error) {
+          console.warn('Erro ao bloquear orientação:', error);
+        }
+      }
+    };
+
+    setupOrientation();
+
+    return () => {
+      isMounted = false;
+      if (platform.isMobile && !platform.isWeb) {
+        ScreenOrientation.unlockAsync().catch(console.warn);
+        StatusBar.setHidden(false);
+      }
+    };
+  }, []); // Remove dependência para evitar loop
+
+  useEffect(() => {
+    loadVideoUrl();
+    loadSeriesInfo();
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleBack();
+      return true;
+    });
+
+    return () => {
+      backHandler.remove();
+      if (controlsTimeout.current) clearTimeout(controlsTimeout.current);
+      if (progressSaveInterval.current) clearInterval(progressSaveInterval.current);
+    };
+  }, [episodeId]);
+
+  useEffect(() => {
+    if (player && videoUrl) {
+      player.replace(videoUrl);
+      if (progress && parseInt(progress) > 0) {
+        setTimeout(() => {
+          player.currentTime = parseInt(progress);
+        }, 500);
+      }
+    }
+  }, [videoUrl]);
+
+  // Listeners do player
+  useEffect(() => {
+    if (!player) return;
+
+    const statusListener = player.addListener('statusChange', (status) => {
+      setIsLoading(!status.isPlaying && status.isBuffering);
+      if (status.error) {
+        console.error('Erro no vídeo:', status.error);
+        setError(platform.isWeb ? 
+          'Formato de vídeo não suportado na web. Use o app mobile.' : 
+          'Erro ao reproduzir vídeo');
+      }
+    });
+
+    const playingListener = player.addListener('playingChange', ({ isPlaying }) => {
+      if (isPlaying) setIsLoading(false);
+    });
+
+    return () => {
+      statusListener.remove();
+      playingListener.remove();
+    };
+  }, [player, platform.isWeb]);
+
+  // Atualizar progresso
+  useEffect(() => {
+    if (!player) return;
+
+    const interval = setInterval(() => {
+      const time = player.currentTime;
+      const dur = player.duration;
+      
+      setCurrentTime(time);
+      setDuration(dur);
+
+      // Salvar progresso a cada 10 segundos E apenas se assistiu mais de 30 segundos
+      if (time > 30 && Math.floor(time) % 10 === 0 && seriesInfo) {
+        addOrUpdateItem(
+          seriesId!,
+          seriesInfo.info.name,
+          seriesInfo.info.cover || '',
+          episodeId!,
+          title!,
+          parseInt(seasonNumber!),
+          parseInt(episodeNumber!),
+          time,
+          dur
+        );
+      }
+
+      // Mostrar próximo episódio nos últimos 30 segundos
+      if (nextEpisode && dur > 0 && (dur - time) <= 30 && !showNextEpisode) {
+        setShowNextEpisode(true);
+      }
+
+      // Verificar se terminou
+      if (dur > 0 && time >= dur - 1) {
+        handleEpisodeComplete();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [player, seriesInfo, nextEpisode, showNextEpisode]);
+
+  // Countdown para próximo episódio
+  useEffect(() => {
+    if (showNextEpisode && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (showNextEpisode && countdown === 0) {
+      playNextEpisode();
+    }
+  }, [showNextEpisode, countdown]);
+
+  // Auto-hide controls
+  useEffect(() => {
+    if (showControls && player?.playing) {
+      if (controlsTimeout.current) clearTimeout(controlsTimeout.current);
+      controlsTimeout.current = setTimeout(() => {
+        setShowControls(false);
+      }, 4000);
+    }
+    return () => {
+      if (controlsTimeout.current) clearTimeout(controlsTimeout.current);
+    };
+  }, [showControls, player?.playing]);
+
+  const loadSeriesInfo = async () => {
+    if (!seriesId) return;
+    try {
+      const info = await iptvApi.getSeriesInfo(seriesId);
+      setSeriesInfo(info);
+
+      // Encontrar próximo episódio
+      const currentSeason = parseInt(seasonNumber!);
+      const currentEp = parseInt(episodeNumber!);
+      const episodes = info.episodes[currentSeason] || [];
+      
+      const nextEp = episodes.find(ep => ep.episode_num === currentEp + 1);
+      if (nextEp) {
+        setNextEpisode(nextEp);
+      } else {
+        // Tentar primeira episódio da próxima temporada
+        const nextSeasonEps = info.episodes[currentSeason + 1];
+        if (nextSeasonEps && nextSeasonEps.length > 0) {
+          setNextEpisode(nextSeasonEps[0]);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao carregar info da série:', err);
+    }
+  };
+
+  const loadVideoUrl = () => {
+    if (!episodeId) {
+      setError('ID do episódio não fornecido');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const url = iptvApi.getStreamUrl(episodeId);
+      setVideoUrl(url);
+      setIsLoading(false);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao carregar vídeo');
+      setIsLoading(false);
+    }
+  };
+
+  const handleEpisodeComplete = async () => {
+    if (seriesInfo && credentials) {
+      // Marcar como completo (100%)
+      await addOrUpdateItem(
+        seriesId!,
+        seriesInfo.info.name,
+        seriesInfo.info.cover || '',
+        episodeId!,
+        title!,
+        parseInt(seasonNumber!),
+        parseInt(episodeNumber!),
+        duration,
+        duration
+      );
+    }
+  };
+
+  const playNextEpisode = async () => {
+    if (!nextEpisode) return;
+
+    const nextSeason = nextEpisode.season || parseInt(seasonNumber!);
+    
+    // Salvar progresso antes de trocar
+    if (player && duration > 0 && seriesInfo) {
+      await addOrUpdateItem(
+        seriesId!,
+        seriesInfo.info.name,
+        seriesInfo.info.cover || '',
+        episodeId!,
+        title!,
+        parseInt(seasonNumber!),
+        parseInt(episodeNumber!),
+        duration,
+        duration
+      );
+    }
+
+    // Usar router.push ao invés de replace
+    router.push({
+      pathname: '/player',
+      params: {
+        episodeId: nextEpisode.id,
+        seriesId: seriesId,
+        seasonNumber: nextSeason.toString(),
+        episodeNumber: nextEpisode.episode_num.toString(),
+        title: nextEpisode.title,
+        progress: '0',
+      },
+    });
+  };
+
+  const togglePlayPause = () => {
+    if (player) {
+      player.playing ? player.pause() : player.play();
+    }
+  };
+
+  const toggleMute = () => {
+    if (player) player.muted = !player.muted;
+  };
+
+  const seekForward = () => {
+    if (player) player.currentTime = Math.min(player.currentTime + 10, duration);
+  };
+
+  const seekBackward = () => {
+    if (player) player.currentTime = Math.max(player.currentTime - 10, 0);
+  };
+
+  const seekTo = (percent: number) => {
+    if (player && duration > 0) {
+      player.currentTime = (duration * percent) / 100;
+    }
+  };
+
+  const handleBack = async () => {
+    // Salvar progresso final antes de sair APENAS se assistiu pelo menos 30 segundos
+    if (player && duration > 0 && seriesInfo && player.currentTime > 30) {
+      const time = player.currentTime;
+      await addOrUpdateItem(
+        seriesId!,
+        seriesInfo.info.name,
+        seriesInfo.info.cover || '',
+        episodeId!,
+        title!,
+        parseInt(seasonNumber!),
+        parseInt(episodeNumber!),
+        time,
+        duration
+      );
+    }
+    router.back();
+  };
+
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` 
+                  : `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Pressable style={styles.backButton} onPress={handleBack}>
+          <Text style={styles.backButtonText}>Voltar</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (isLoading || !videoUrl) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#e50914" />
+        <Text style={styles.loadingText}>Carregando episódio...</Text>
+      </View>
+    );
+  }
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <Pressable
+      style={[styles.container, platform.isTV && styles.tvContainer]}
+      onPress={() => setShowControls(!showControls)}
+    >
+      <VideoView
+        player={player}
+        style={styles.video}
+        allowsFullscreen={false}
+        allowsPictureInPicture={platform.isAndroid}
+        nativeControls={false}
+      />
+
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
+
+      {showControls && (
+        <View style={styles.controls}>
+          <View style={styles.topControls}>
+            <Pressable style={styles.closeButton} onPress={handleBack}>
+              <ChevronLeft size={28} color="#fff" />
+            </Pressable>
+            <View style={styles.episodeInfo}>
+              <Text style={styles.episodeTitle}>T{seasonNumber} E{episodeNumber}</Text>
+              <Text style={styles.episodeSubtitle}>{title}</Text>
+            </View>
+          </View>
+
+          <View style={styles.centerControls}>
+            <Pressable onPress={seekBackward} style={styles.seekButton}>
+              <RotateCcw size={32} color="#fff" />
+              <Text style={styles.seekText}>10s</Text>
+            </Pressable>
+
+            <Pressable onPress={togglePlayPause} style={styles.playButton}>
+              {player?.playing ? (
+                <Pause size={56} color="#fff" fill="#fff" />
+              ) : (
+                <Play size={56} color="#fff" fill="#fff" />
+              )}
+            </Pressable>
+
+            <Pressable onPress={seekForward} style={styles.seekButton}>
+              <RotateCw size={32} color="#fff" />
+              <Text style={styles.seekText}>10s</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.bottomControls}>
+            <Pressable 
+              style={styles.progressBarContainer}
+              onPress={(e) => {
+                const { locationX } = e.nativeEvent;
+                const width = Dimensions.get('window').width - 32;
+                const percent = (locationX / width) * 100;
+                seekTo(percent);
+              }}
+            >
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+              </View>
+            </Pressable>
+
+            <View style={styles.controlRow}>
+              <Text style={styles.timeText}>
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </Text>
+
+              <View style={styles.controlButtons}>
+                <Pressable onPress={toggleMute} style={styles.controlButton}>
+                  {player?.muted ? <VolumeX size={24} color="#fff" /> : <Volume2 size={24} color="#fff" />}
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {showNextEpisode && nextEpisode && (
+        <View style={styles.nextEpisodeOverlay}>
+          <View style={styles.nextEpisodeCard}>
+            <Text style={styles.nextEpisodeTitle}>Próximo Episódio</Text>
+            <Text style={styles.nextEpisodeSubtitle}>
+              E{nextEpisode.episode_num}: {nextEpisode.title}
+            </Text>
+            <Text style={styles.countdownText}>Iniciando em {countdown}s</Text>
+            <View style={styles.nextEpisodeButtons}>
+              <Pressable 
+                style={styles.cancelButton}
+                onPress={() => setShowNextEpisode(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </Pressable>
+              <Pressable 
+                style={styles.playNowButton}
+                onPress={playNextEpisode}
+              >
+                <Play size={20} color="#fff" fill="#fff" />
+                <Text style={styles.playNowText}>Assistir Agora</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  tvContainer: {
+    paddingHorizontal: 48,
+    paddingVertical: 27,
+  },
+  video: {
+    width: '100%',
+    height: '100%',
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 18,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  backButton: {
+    backgroundColor: '#e50914',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 4,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  controls: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'space-between',
+  },
+  topControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    paddingTop: 50,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  episodeInfo: {
+    flex: 1,
+  },
+  episodeTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  episodeSubtitle: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  centerControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 48,
+  },
+  seekButton: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  seekText: {
+    color: '#fff',
+    fontSize: 12,
+  },
+  playButton: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bottomControls: {
+    padding: 16,
+    gap: 12,
+  },
+  progressBarContainer: {
+    width: '100%',
+    paddingVertical: 8,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#e50914',
+  },
+  controlRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timeText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  controlButtons: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  controlButton: {
+    padding: 8,
+  },
+  nextEpisodeOverlay: {
+    position: 'absolute',
+    bottom: 100,
+    right: 16,
+    left: 16,
+    alignItems: 'flex-end',
+  },
+  nextEpisodeCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    borderRadius: 8,
+    padding: 16,
+    maxWidth: 400,
+    borderWidth: 2,
+    borderColor: '#e50914',
+  },
+  nextEpisodeTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  nextEpisodeSubtitle: {
+    color: '#ccc',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  countdownText: {
+    color: '#e50914',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  nextEpisodeButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 4,
+    backgroundColor: '#333',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  playNowButton: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 4,
+    backgroundColor: '#e50914',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  playNowText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+});// app/(tabs)/index.tsx - VERSÃO ATUALIZADA com Continue Assistindo
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, ScrollView, StyleSheet, RefreshControl, ActivityIndicator, Text } from 'react-native';
+import { useRouter } from 'expo-router';
+import { iptvApi, IPTVSeries } from '@/lib/iptvApi';
+import { useIPTVAuth } from '@/contexts/IPTVAuthContext';
+import { useContinueWatching } from '@/hooks/useContinueWatching';
+import HeroBanner from '@/components/HeroBanner';
+import DoramaRow from '@/components/DoramaRow';
+import ContinueWatchingRow from '@/components/ContinueWatchingRow';
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const { isAuthenticated } = useIPTVAuth();
+  const { items: continueWatchingItems, loading: cwLoading, removeItem, refresh } = useContinueWatching();
+  
+  const [featuredDorama, setFeaturedDorama] = useState<IPTVSeries | null>(null);
+  const [allSeries, setAllSeries] = useState<IPTVSeries[]>([]);
+  const [trending, setTrending] = useState<IPTVSeries[]>([]);
+  const [newReleases, setNewReleases] = useState<IPTVSeries[]>([]);
+  const [byGenre, setByGenre] = useState<Map<string, IPTVSeries[]>>(new Map());
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+
+  const loadData = async () => {
+    if (!isAuthenticated) return;
+
+    try {
+      setError('');
+      const series = await iptvApi.getSeries();
+
+      setAllSeries(series);
+
+      // Featured: Série aleatória com backdrop
+      const withBackdrop = series.filter(s => s.backdrop_path && s.backdrop_path.length > 0);
+      if (withBackdrop.length > 0) {
+        const randomIndex = Math.floor(Math.random() * Math.min(10, withBackdrop.length));
+        setFeaturedDorama(withBackdrop[randomIndex]);
+      } else if (series.length > 0) {
+        const randomIndex = Math.floor(Math.random() * Math.min(10, series.length));
+        setFeaturedDorama(series[randomIndex]);
+      }
+
+      // Trending: Primeiras 15
+      setTrending(series.slice(0, 15));
+
+      // New Releases: Baseado na data mais recente
+      const sorted = [...series].sort((a, b) => {
+        const dateA = a.releaseDate ? parseInt(a.releaseDate) : 0;
+        const dateB = b.releaseDate ? parseInt(b.releaseDate) : 0;
+        return dateB - dateA;
+      });
+      setNewReleases(sorted.slice(0, 15));
+
+      // Agrupar por gênero
+      const genreMap = new Map<string, IPTVSeries[]>();
+      series.forEach(s => {
+        if (s.genre) {
+          const genres = s.genre.split(',').map(g => g.trim());
+          genres.forEach(genre => {
+            if (genre) {
+              const existing = genreMap.get(genre) || [];
+              if (existing.length < 15) {
+                existing.push(s);
+                genreMap.set(genre, existing);
+              }
+            }
+          });
+        }
+      });
+      setByGenre(genreMap);
+
+    } catch (err: any) {
+      console.error('Erro ao carregar séries:', err);
+      setError(err.message || 'Erro ao carregar catálogo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [isAuthenticated]);
+
+  // Recarregar Continue Assistindo quando voltar para a tela
+  useEffect(() => {
+    const unsubscribe = router.subscribe?.(() => {
+      refresh();
+    });
+    return unsubscribe;
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    await refresh();
+    setRefreshing(false);
+  }, [isAuthenticated]);
+
+  const handleDoramaPress = (dorama: IPTVSeries) => {
+    router.push(`/dorama/${dorama.series_id}`);
+  };
+
+  const convertToDorama = (series: IPTVSeries) => ({
+    id: series.series_id,
+    title: series.name,
+    description: series.plot || null,
+    poster_url: series.cover || null,
+    banner_url: series.backdrop_path?.[0] || series.cover || null,
+    year: series.releaseDate ? parseInt(series.releaseDate) : null,
+    country: null,
+    rating: series.rating ? parseFloat(series.rating) : null,
+    total_episodes: 0,
+    status: 'ongoing' as const,
+    genres: series.genre ? series.genre.split(',').map(g => g.trim()) : [],
+    created_at: '',
+    updated_at: '',
+  });
+
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#e50914" />
+        <Text style={styles.loadingText}>Carregando catálogo...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e50914" />
+      }
+    >
+      {featuredDorama && (
+        <HeroBanner
+          dorama={convertToDorama(featuredDorama)}
+          onPlay={() => handleDoramaPress(featuredDorama)}
+          onInfo={() => handleDoramaPress(featuredDorama)}
+          onAddToList={() => {}}
+          inMyList={false}
+        />
+      )}
+
+      {/* Continue Assistindo */}
+      {!cwLoading && continueWatchingItems.length > 0 && (
+        <ContinueWatchingRow items={continueWatchingItems} onRemove={removeItem} />
+      )}
+
+      {/* Em Alta */}
+      <DoramaRow
+        title="Em Alta"
+        doramas={trending.map(convertToDorama)}
+        onDoramaPress={(d) => router.push(`/dorama/${d.id}`)}
+        onAddToList={() => {}}
+        myListIds={new Set()}
+      />
+
+      {/* Novos Lançamentos */}
+      <DoramaRow
+        title="Novos Lançamentos"
+        doramas={newReleases.map(convertToDorama)}
+        onDoramaPress={(d) => router.push(`/dorama/${d.id}`)}
+        onAddToList={() => {}}
+        myListIds={new Set()}
+      />
+
+      {/* Categorias por Gênero */}
+      {Array.from(byGenre.entries()).map(([genre, series]) => (
+        <DoramaRow
+          key={genre}
+          title={genre}
+          doramas={series.map(convertToDorama)}
+          onDoramaPress={(d) => router.push(`/dorama/${d.id}`)}
+          onAddToList={() => {}}
+          myListIds={new Set()}
+        />
+      ))}
+
+      {/* Espaçamento final */}
+      <View style={styles.bottomSpacer} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    color: '#e50914',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  bottomSpacer: {
+    height: 24,
+  },
+});// app/dorama/[id].tsx - VERSÃO ATUALIZADA com Resume Dialog
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Pressable,
+  ImageBackground,
+  ActivityIndicator,
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Play, Plus, Check, ChevronLeft } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { iptvApi, IPTVSeriesInfo, IPTVEpisode } from '@/lib/iptvApi';
+import { useIPTVAuth } from '@/contexts/IPTVAuthContext';
+import { useContinueWatching, ContinueWatchingItem } from '@/hooks/useContinueWatching';
+import ResumeDialog from '@/components/ResumeDialog';
+
+const MY_LIST_KEY = '@doramaflix:my_list';
+
+export default function DoramaDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const { credentials } = useIPTVAuth();
+  const { items: continueWatchingItems } = useContinueWatching();
+  
+  const [seriesInfo, setSeriesInfo] = useState<IPTVSeriesInfo | null>(null);
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const [inMyList, setInMyList] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [resumeData, setResumeData] = useState<ContinueWatchingItem | null>(null);
+
+  useEffect(() => {
+    loadSeriesDetails();
+    checkMyList();
+  }, [id]);
+
+  const loadSeriesDetails = async () => {
+    if (!id) return;
+
+    try {
+      const data = await iptvApi.getSeriesInfo(id);
+      setSeriesInfo(data);
+      
+      if (data.seasons && data.seasons.length > 0) {
+        setSelectedSeason(data.seasons[0].season_number);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar detalhes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkMyList = async () => {
+    if (!credentials || !id) return;
+
+    try {
+      const saved = await AsyncStorage.getItem(`${MY_LIST_KEY}_${credentials.username}`);
+      if (saved) {
+        const ids: string[] = JSON.parse(saved);
+        setInMyList(ids.includes(id));
+      }
+    } catch (error) {
+      console.error('Erro ao verificar lista:', error);
+    }
+  };
+
+  const handleAddToList = async () => {
+    if (!credentials || !id) return;
+
+    try {
+      const saved = await AsyncStorage.getItem(`${MY_LIST_KEY}_${credentials.username}`);
+      let ids: string[] = saved ? JSON.parse(saved) : [];
+
+      if (inMyList) {
+        ids = ids.filter(seriesId => seriesId !== id);
+        setInMyList(false);
+      } else {
+        ids.push(id);
+        setInMyList(true);
+      }
+
+      await AsyncStorage.setItem(`${MY_LIST_KEY}_${credentials.username}`, JSON.stringify(ids));
+    } catch (error) {
+      console.error('Erro ao atualizar lista:', error);
+    }
+  };
+
+  const handlePlayButton = () => {
+    // Verificar se existe progresso salvo para esta série
+    const savedProgress = continueWatchingItems.find(item => item.seriesId === id);
+    
+    if (savedProgress && savedProgress.progress > 5 && savedProgress.progress < 95) {
+      // Tem progresso válido, mostrar dialog
+      setResumeData(savedProgress);
+      setShowResumeDialog(true);
+    } else {
+      // Não tem progresso, iniciar do primeiro episódio
+      const firstEpisode = seriesInfo?.episodes[selectedSeason]?.[0];
+      if (firstEpisode) {
+        playEpisode(firstEpisode, 0);
+      }
+    }
+  };
+
+  const handleResumeFromDialog = () => {
+    if (resumeData) {
+      setShowResumeDialog(false);
+      playEpisode(
+        {
+          id: resumeData.episodeId,
+          episode_num: resumeData.episodeNumber,
+          title: resumeData.episodeTitle,
+          container_extension: 'm3u8',
+          season: resumeData.seasonNumber,
+        },
+        resumeData.currentTime
+      );
+    }
+  };
+
+  const handleRestartFromDialog = () => {
+    if (resumeData) {
+      setShowResumeDialog(false);
+      playEpisode(
+        {
+          id: resumeData.episodeId,
+          episode_num: resumeData.episodeNumber,
+          title: resumeData.episodeTitle,
+          container_extension: 'm3u8',
+          season: resumeData.seasonNumber,
+        },
+        0
+      );
+    }
+  };
+
+  const handleEpisodePress = (episode: IPTVEpisode) => {
+    // Quando clica em um episódio específico, verificar se tem progresso
+    const savedProgress = continueWatchingItems.find(item => item.episodeId === episode.id);
+    
+    if (savedProgress && savedProgress.progress > 5 && savedProgress.progress < 95) {
+      // Tem progresso, mostrar dialog
+      setResumeData(savedProgress);
+      setShowResumeDialog(true);
+    } else {
+      // Não tem progresso, iniciar normalmente
+      playEpisode(episode, 0);
+    }
+  };
+
+  const playEpisode = (episode: IPTVEpisode, startTime: number = 0) => {
+    router.push({
+      pathname: '/player',
+      params: {
+        episodeId: episode.id,
+        seriesId: id,
+        seasonNumber: (episode.season || selectedSeason).toString(),
+        episodeNumber: episode.episode_num.toString(),
+        title: episode.title,
+        progress: startTime.toString(),
+      },
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#e50914" />
+      </View>
+    );
+  }
+
+  if (!seriesInfo) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Série não encontrada</Text>
+      </View>
+    );
+  }
+
+  const info = seriesInfo.info;
+  const currentSeasonEpisodes = seriesInfo.episodes[selectedSeason] || [];
+
+  // Encontrar progresso para cada episódio
+  const getEpisodeProgress = (episodeId: string): number => {
+    const item = continueWatchingItems.find(i => i.episodeId === episodeId);
+    return item?.progress || 0;
+  };
+
+  return (
+    <>
+      <ScrollView style={styles.container}>
+        <ImageBackground
+          source={{ uri: info.backdrop_path?.[0] || info.cover || '' }}
+          style={styles.banner}
+          resizeMode="cover"
+        >
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)', '#000']} style={styles.gradient}>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <ChevronLeft size={28} color="#fff" />
+            </Pressable>
+            <View style={styles.bannerContent}>
+              <Text style={styles.title}>{info.name}</Text>
+            </View>
+          </LinearGradient>
+        </ImageBackground>
+
+        <View style={styles.content}>
+          <View style={styles.actions}>
+            <Pressable style={styles.playButton} onPress={handlePlayButton}>
+              <Play size={20} color="#000" fill="#000" />
+              <Text style={styles.playText}>
+                {continueWatchingItems.find(i => i.seriesId === id) ? 'Continuar' : 'Assistir'}
+              </Text>
+            </Pressable>
+            <Pressable style={styles.listButton} onPress={handleAddToList}>
+              {inMyList ? <Check size={24} color="#fff" /> : <Plus size={24} color="#fff" />}
+              <Text style={styles.listButtonText}>{inMyList ? 'Na lista' : 'Minha lista'}</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.info}>
+            <View style={styles.infoRow}>
+              {info.releaseDate && <Text style={styles.infoText}>{info.releaseDate}</Text>}
+              {seriesInfo.seasons.length > 0 && (
+                <Text style={styles.infoText}>{seriesInfo.seasons.length} Temporadas</Text>
+              )}
+              {info.rating && <Text style={styles.infoText}>★ {info.rating}</Text>}
+            </View>
+            {info.genre && <Text style={styles.genres}>{info.genre}</Text>}
+          </View>
+
+          {info.plot && (
+            <View style={styles.description}>
+              <Text style={styles.descriptionText}>{info.plot}</Text>
+            </View>
+          )}
+
+          {info.cast && (
+            <View style={styles.description}>
+              <Text style={styles.label}>Elenco:</Text>
+              <Text style={styles.descriptionText}>{info.cast}</Text>
+            </View>
+          )}
+
+          <View style={styles.seasonsSection}>
+            <Text style={styles.sectionTitle}>Temporadas</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.seasonButtons}>
+              {seriesInfo.seasons.map(season => (
+                <Pressable
+                  key={season.season_number}
+                  style={[
+                    styles.seasonButton,
+                    selectedSeason === season.season_number && styles.seasonButtonActive,
+                  ]}
+                  onPress={() => setSelectedSeason(season.season_number)}
+                >
+                  <Text
+                    style={[
+                      styles.seasonButtonText,
+                      selectedSeason === season.season_number && styles.seasonButtonTextActive,
+                    ]}
+                  >
+                    Temporada {season.season_number}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+
+          <View style={styles.episodesSection}>
+            <Text style={styles.sectionTitle}>Episódios</Text>
+            {currentSeasonEpisodes.map(episode => {
+              const progress = getEpisodeProgress(episode.id);
+
+              return (
+                <Pressable
+                  key={episode.id}
+                  style={styles.episodeItem}
+                  onPress={() => handleEpisodePress(episode)}
+                >
+                  <View style={styles.episodeNumber}>
+                    <Text style={styles.episodeNumberText}>{episode.episode_num}</Text>
+                  </View>
+                  <View style={styles.episodeInfo}>
+                    <Text style={styles.episodeTitle}>{episode.title}</Text>
+                    {episode.info?.duration && (
+                      <Text style={styles.episodeDuration}>{episode.info.duration}</Text>
+                    )}
+                    {progress > 0 && (
+                      <View style={styles.episodeProgress}>
+                        <View style={[styles.episodeProgressFill, { width: `${progress}%` }]} />
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.episodePlayIcon}>
+                    <Play size={20} color="#fff" />
+                  </View>
+                </Pressable>
+              );
+            })}
+            {currentSeasonEpisodes.length === 0 && (
+              <Text style={styles.emptyText}>Nenhum episódio disponível nesta temporada</Text>
+            )}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Dialog de Continuar/Reiniciar */}
+      {resumeData && (
+        <ResumeDialog
+          visible={showResumeDialog}
+          episodeNumber={resumeData.episodeNumber}
+          seasonNumber={resumeData.seasonNumber}
+          episodeTitle={resumeData.episodeTitle}
+          progress={resumeData.progress}
+          onResume={handleResumeFromDialog}
+          onRestart={handleRestartFromDialog}
+          onCancel={() => setShowResumeDialog(false)}
+        />
+      )}
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 18,
+  },
+  banner: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    maxHeight: 400,
+  },
+  gradient: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bannerContent: {
+    padding: 16,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 32,
+    fontWeight: '700',
+  },
+  content: {
+    padding: 16,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  playButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    borderRadius: 4,
+    gap: 8,
+  },
+  playText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  listButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#333',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 4,
+    gap: 8,
+  },
+  listButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  info: {
+    marginBottom: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 8,
+  },
+  infoText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  genres: {
+    color: '#999',
+    fontSize: 14,
+  },
+  description: {
+    marginBottom: 16,
+  },
+  label: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  descriptionText: {
+    color: '#fff',
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  seasonsSection: {
+    marginBottom: 16,
+  },
+  seasonButtons: {
+    marginTop: 8,
+  },
+  seasonButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#1a1a1a',
+    marginRight: 8,
+  },
+  seasonButtonActive: {
+    backgroundColor: '#e50914',
+  },
+  seasonButtonText: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  seasonButtonTextActive: {
+    color: '#fff',
+  },
+  episodesSection: {
+    marginTop: 8,
+  },
+  sectionTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  episodeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  episodeNumber: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  episodeNumberText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  episodeInfo: {
+    flex: 1,
+  },
+  episodeTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  episodeDuration: {
+    color: '#999',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  episodeProgress: {
+    height: 3,
+    backgroundColor: '#333',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  episodeProgressFill: {
+    height: '100%',
+    backgroundColor: '#e50914',
+  },
+  episodePlayIcon: {
+    marginLeft: 12,
+  },
+  emptyText: {
+    color: '#999',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+});export interface Dorama {
+  id: string;
+  title: string;
+  description: string | null;
+  poster_url: string | null;
+  banner_url: string | null;
+  year: number | null;
+  country: string | null;
+  rating: number | null;
+  total_episodes: number;
+  status: 'ongoing' | 'completed';
+  genres: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Episode {
+  id: string;
+  dorama_id: string;
+  episode_number: number;
+  title: string | null;
+  description: string | null;
+  thumbnail_url: string | null;
+  video_url: string;
+  duration_seconds: number;
+  intro_start: number;
+  intro_end: number;
+  outro_start: number;
+  created_at: string;
+}
+
+export interface WatchProgress {
+  id: string;
+  user_id: string;
+  episode_id: string;
+  dorama_id: string;
+  progress_seconds: number;
+  completed: boolean;
+  last_watched: string;
+}
+
+export interface MyList {
+  id: string;
+  user_id: string;
+  dorama_id: string;
+  added_at: string;
+}
+
+export interface UserPreferences {
+  id: string;
+  user_id: string;
+  auto_skip_intro: boolean;
+  auto_skip_outro: boolean;
+  auto_play_next: boolean;
+  video_quality: string;
+  subtitle_language: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Profile {
+  id: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DoramaWithProgress extends Dorama {
+  watch_progress?: WatchProgress;
+  in_my_list?: boolean;
+  next_episode?: Episode;
+}
+/*
+  # Dorama Streaming Platform Database Schema
+
+  ## Overview
+  Complete database schema for a Netflix-style dorama streaming platform with authentication,
+  content management, watch progress tracking, and user preferences.
+
+  ## Tables Created
+
+  ### 1. profiles
+  Extends auth.users with additional user information
+  - `id` (uuid, FK to auth.users)
+  - `email` (text)
+  - `display_name` (text)
+  - `avatar_url` (text)
+  - `created_at` (timestamptz)
+  - `updated_at` (timestamptz)
+
+  ### 2. doramas
+  Stores dorama series information
+  - `id` (uuid, PK)
+  - `title` (text)
+  - `description` (text)
+  - `poster_url` (text)
+  - `banner_url` (text)
+  - `year` (integer)
+  - `country` (text)
+  - `rating` (numeric)
+  - `total_episodes` (integer)
+  - `status` (text: ongoing/completed)
+  - `genres` (text array)
+  - `created_at` (timestamptz)
+  - `updated_at` (timestamptz)
+
+  ### 3. episodes
+  Stores individual episode information
+  - `id` (uuid, PK)
+  - `dorama_id` (uuid, FK)
+  - `episode_number` (integer)
+  - `title` (text)
+  - `description` (text)
+  - `thumbnail_url` (text)
+  - `video_url` (text)
+  - `duration_seconds` (integer)
+  - `intro_start` (integer, seconds)
+  - `intro_end` (integer, seconds)
+  - `outro_start` (integer, seconds)
+  - `created_at` (timestamptz)
+
+  ### 4. watch_progress
+  Tracks user viewing progress
+  - `id` (uuid, PK)
+  - `user_id` (uuid, FK)
+  - `episode_id` (uuid, FK)
+  - `dorama_id` (uuid, FK)
+  - `progress_seconds` (integer)
+  - `completed` (boolean)
+  - `last_watched` (timestamptz)
+
+  ### 5. my_list
+  User's saved doramas list
+  - `id` (uuid, PK)
+  - `user_id` (uuid, FK)
+  - `dorama_id` (uuid, FK)
+  - `added_at` (timestamptz)
+
+  ### 6. user_preferences
+  User settings and preferences
+  - `id` (uuid, PK)
+  - `user_id` (uuid, FK)
+  - `auto_skip_intro` (boolean)
+  - `auto_skip_outro` (boolean)
+  - `auto_play_next` (boolean)
+  - `video_quality` (text)
+  - `subtitle_language` (text)
+
+  ## Security
+  - RLS enabled on all tables
+  - Policies ensure users can only access their own data
+  - Public read access for dorama and episode content
+  - Authenticated users can manage their own watch progress and lists
+*/
+
+-- Create profiles table
+CREATE TABLE IF NOT EXISTS profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email text UNIQUE NOT NULL,
+  display_name text,
+  avatar_url text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own profile"
+  ON profiles FOR SELECT
+  TO authenticated
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+  ON profiles FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile"
+  ON profiles FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = id);
+
+-- Create doramas table
+CREATE TABLE IF NOT EXISTS doramas (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text,
+  poster_url text,
+  banner_url text,
+  year integer,
+  country text DEFAULT 'Korea',
+  rating numeric(3,1) DEFAULT 0,
+  total_episodes integer DEFAULT 0,
+  status text DEFAULT 'ongoing',
+  genres text[] DEFAULT '{}',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE doramas ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view doramas"
+  ON doramas FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Create episodes table
+CREATE TABLE IF NOT EXISTS episodes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  dorama_id uuid REFERENCES doramas(id) ON DELETE CASCADE NOT NULL,
+  episode_number integer NOT NULL,
+  title text,
+  description text,
+  thumbnail_url text,
+  video_url text NOT NULL,
+  duration_seconds integer DEFAULT 0,
+  intro_start integer DEFAULT 0,
+  intro_end integer DEFAULT 0,
+  outro_start integer DEFAULT 0,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(dorama_id, episode_number)
+);
+
+ALTER TABLE episodes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view episodes"
+  ON episodes FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Create watch_progress table
+CREATE TABLE IF NOT EXISTS watch_progress (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  episode_id uuid REFERENCES episodes(id) ON DELETE CASCADE NOT NULL,
+  dorama_id uuid REFERENCES doramas(id) ON DELETE CASCADE NOT NULL,
+  progress_seconds integer DEFAULT 0,
+  completed boolean DEFAULT false,
+  last_watched timestamptz DEFAULT now(),
+  UNIQUE(user_id, episode_id)
+);
+
+ALTER TABLE watch_progress ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own watch progress"
+  ON watch_progress FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own watch progress"
+  ON watch_progress FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own watch progress"
+  ON watch_progress FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own watch progress"
+  ON watch_progress FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Create my_list table
+CREATE TABLE IF NOT EXISTS my_list (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  dorama_id uuid REFERENCES doramas(id) ON DELETE CASCADE NOT NULL,
+  added_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, dorama_id)
+);
+
+ALTER TABLE my_list ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own list"
+  ON my_list FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert to own list"
+  ON my_list FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete from own list"
+  ON my_list FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Create user_preferences table
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE NOT NULL,
+  auto_skip_intro boolean DEFAULT true,
+  auto_skip_outro boolean DEFAULT false,
+  auto_play_next boolean DEFAULT true,
+  video_quality text DEFAULT 'auto',
+  subtitle_language text DEFAULT 'pt-BR',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own preferences"
+  ON user_preferences FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own preferences"
+  ON user_preferences FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own preferences"
+  ON user_preferences FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_episodes_dorama_id ON episodes(dorama_id);
+CREATE INDEX IF NOT EXISTS idx_watch_progress_user_id ON watch_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_watch_progress_dorama_id ON watch_progress(dorama_id);
+CREATE INDEX IF NOT EXISTS idx_watch_progress_last_watched ON watch_progress(last_watched DESC);
+CREATE INDEX IF NOT EXISTS idx_my_list_user_id ON my_list(user_id);
+CREATE INDEX IF NOT EXISTS idx_doramas_genres ON doramas USING gin(genres);
