@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Dorama } from '@/types/database';
 import DoramaCard from './DoramaCard';
+import TVGrid from './TVGrid';
 
 interface DoramaRowProps {
   title: string;
@@ -17,50 +18,41 @@ export default function DoramaRow({
   title,
   doramas,
   onDoramaPress,
-  onAddToList,
   myListIds,
   watchProgress,
-  landscape,
 }: DoramaRowProps) {
   if (doramas.length === 0) return null;
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {doramas.map((dorama) => (
+      <TVGrid
+        data={doramas}
+        renderItem={(dorama: Dorama, index: number) => (
           <DoramaCard
-            key={dorama.id}
             dorama={dorama}
             onPress={() => onDoramaPress(dorama)}
-            onAddToList={onAddToList ? () => onAddToList(dorama) : undefined}
             inMyList={myListIds?.has(dorama.id)}
             showProgress={!!watchProgress}
             progress={watchProgress?.get(dorama.id)}
-            landscape={landscape}
+            focused={index === 0}
           />
-        ))}
-      </ScrollView>
+        )}
+        horizontal
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: 40,
   },
   title: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 32,
     fontWeight: '700',
-    marginBottom: 12,
-    paddingHorizontal: 16,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
+    marginBottom: 20,
+    paddingHorizontal: 48,
   },
 });

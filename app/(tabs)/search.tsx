@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { Search as SearchIcon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { iptvApi, IPTVSeries } from '@/lib/iptvApi';
 import { useIPTVAuth } from '@/contexts/IPTVAuthContext';
 import DoramaCard from '@/components/DoramaCard';
+import TVGrid from '@/components/TVGrid';
 import { Dorama } from '@/types/database';
 
 const GENRES = ['Romance', 'Comédia', 'Drama', 'Ação', 'Fantasia', 'Histórico', 'Suspense', 'Thriller'];
@@ -53,7 +54,7 @@ export default function SearchScreen() {
     }
 
     if (selectedGenre) {
-      filtered = filtered.filter(s => 
+      filtered = filtered.filter(s =>
         s.genre?.toLowerCase().includes(selectedGenre.toLowerCase())
       );
     }
@@ -91,11 +92,10 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header fixo e compacto */}
       <View style={styles.header}>
         <Text style={styles.title}>Buscar</Text>
         <View style={styles.searchContainer}>
-          <SearchIcon size={20} color="#999" />
+          <SearchIcon size={28} color="#999" />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar doramas..."
@@ -106,49 +106,47 @@ export default function SearchScreen() {
         </View>
       </View>
 
-      {/* Categorias compactas em scroll horizontal */}
-      <View style={styles.genresWrapper}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={styles.genresContainer}
-          contentContainerStyle={styles.genresContent}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.genresContainer}
+        contentContainerStyle={styles.genresContent}
+      >
+        <Pressable
+          style={[styles.genreButton, !selectedGenre && styles.genreButtonActive]}
+          onPress={() => setSelectedGenre(null)}
         >
+          <Text style={[styles.genreText, !selectedGenre && styles.genreTextActive]}>
+            Todos
+          </Text>
+        </Pressable>
+        {GENRES.map(genre => (
           <Pressable
-            style={[styles.genreButton, !selectedGenre && styles.genreButtonActive]}
-            onPress={() => setSelectedGenre(null)}
+            key={genre}
+            style={[styles.genreButton, selectedGenre === genre && styles.genreButtonActive]}
+            onPress={() => setSelectedGenre(genre)}
           >
-            <Text style={[styles.genreText, !selectedGenre && styles.genreTextActive]}>
-              Todos
+            <Text style={[styles.genreText, selectedGenre === genre && styles.genreTextActive]}>
+              {genre}
             </Text>
           </Pressable>
-          {GENRES.map(genre => (
-            <Pressable
-              key={genre}
-              style={[styles.genreButton, selectedGenre === genre && styles.genreButtonActive]}
-              onPress={() => setSelectedGenre(genre)}
-            >
-              <Text style={[styles.genreText, selectedGenre === genre && styles.genreTextActive]}>
-                {genre}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Grid de resultados */}
-      <ScrollView style={styles.content} contentContainerStyle={styles.grid}>
-        {filteredSeries.map(series => (
-          <View key={series.series_id} style={styles.gridItem}>
-            <DoramaCard
-              dorama={convertToDorama(series)}
-              onPress={() => handleDoramaPress(series)}
-              onAddToList={() => {}}
-              inMyList={false}
-            />
-          </View>
         ))}
-        {filteredSeries.length === 0 && (
+      </ScrollView>
+
+      <ScrollView style={styles.content}>
+        {filteredSeries.length > 0 ? (
+          <TVGrid
+            data={filteredSeries}
+            renderItem={(series: IPTVSeries) => (
+              <DoramaCard
+                dorama={convertToDorama(series)}
+                onPress={() => handleDoramaPress(series)}
+                inMyList={false}
+              />
+            )}
+            numColumns={6}
+          />
+        ) : (
           <Text style={styles.emptyText}>Nenhum dorama encontrado</Text>
         )}
       </ScrollView>
@@ -168,47 +166,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 12,
+    paddingHorizontal: 48,
+    paddingTop: 40,
+    paddingBottom: 20,
   },
   title: {
     color: '#fff',
-    fontSize: 28,
+    fontSize: 42,
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: 24,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 44,
-    gap: 8,
+    paddingHorizontal: 20,
+    height: 64,
+    gap: 16,
   },
   searchInput: {
     flex: 1,
     color: '#fff',
-    fontSize: 16,
-  },
-  genresWrapper: {
-    paddingVertical: 8,
+    fontSize: 20,
   },
   genresContainer: {
-    maxHeight: 40,
+    maxHeight: 70,
+    marginBottom: 20,
   },
   genresContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 48,
     alignItems: 'center',
   },
   genreButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
     backgroundColor: '#1a1a1a',
-    marginRight: 8,
-    height: 36,
+    marginRight: 16,
+    height: 50,
     justifyContent: 'center',
   },
   genreButtonActive: {
@@ -216,7 +212,7 @@ const styles = StyleSheet.create({
   },
   genreText: {
     color: '#999',
-    fontSize: 13,
+    fontSize: 18,
     fontWeight: '600',
   },
   genreTextActive: {
@@ -225,22 +221,11 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 12,
-    paddingTop: 8,
-  },
-  gridItem: {
-    width: '33.33%',
-    paddingHorizontal: 4,
-    marginBottom: 12,
-  },
   emptyText: {
     color: '#999',
-    fontSize: 16,
+    fontSize: 20,
     textAlign: 'center',
-    marginTop: 40,
+    marginTop: 60,
     width: '100%',
   },
 });

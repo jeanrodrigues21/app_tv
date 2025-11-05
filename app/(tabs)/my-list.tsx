@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIPTVAuth } from '@/contexts/IPTVAuthContext';
 import { iptvApi, IPTVSeries } from '@/lib/iptvApi';
 import DoramaCard from '@/components/DoramaCard';
+import TVGrid from '@/components/TVGrid';
 import { Dorama } from '@/types/database';
 
 const MY_LIST_KEY = '@doramaflix:my_list';
@@ -24,12 +25,10 @@ export default function MyListScreen() {
     if (!isAuthenticated) return;
 
     try {
-      // Carregar IDs salvos localmente
       const saved = await AsyncStorage.getItem(`${MY_LIST_KEY}_${credentials?.username}`);
       const ids: string[] = saved ? JSON.parse(saved) : [];
       setMyListIds(ids);
 
-      // Buscar dados completos das séries
       if (ids.length > 0) {
         const allSeries = await iptvApi.getSeries();
         const mySeries = allSeries.filter(s => ids.includes(s.series_id));
@@ -50,17 +49,6 @@ export default function MyListScreen() {
 
   const handleDoramaPress = (series: IPTVSeries) => {
     router.push(`/dorama/${series.series_id}`);
-  };
-
-  const handleRemoveFromList = async (series: IPTVSeries) => {
-    const newIds = myListIds.filter(id => id !== series.series_id);
-    setMyListIds(newIds);
-    setDoramas(doramas.filter(d => d.series_id !== series.series_id));
-    
-    await AsyncStorage.setItem(
-      `${MY_LIST_KEY}_${credentials?.username}`, 
-      JSON.stringify(newIds)
-    );
   };
 
   const convertToDorama = (series: IPTVSeries): Dorama => ({
@@ -88,22 +76,23 @@ export default function MyListScreen() {
 
       <ScrollView
         style={styles.content}
-        contentContainerStyle={styles.grid}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e50914" />
         }
       >
-        {doramas.map(series => (
-          <View key={series.series_id} style={styles.gridItem}>
-            <DoramaCard
-              dorama={convertToDorama(series)}
-              onPress={() => handleDoramaPress(series)}
-              onAddToList={() => handleRemoveFromList(series)}
-              inMyList={true}
-            />
-          </View>
-        ))}
-        {doramas.length === 0 && !refreshing && (
+        {doramas.length > 0 ? (
+          <TVGrid
+            data={doramas}
+            renderItem={(series: IPTVSeries) => (
+              <DoramaCard
+                dorama={convertToDorama(series)}
+                onPress={() => handleDoramaPress(series)}
+                inMyList={true}
+              />
+            )}
+            numColumns={6}
+          />
+        ) : (
           <Text style={styles.emptyText}>
             Sua lista está vazia.{'\n'}Adicione doramas à sua lista para assistir depois.
           </Text>
@@ -119,38 +108,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   header: {
-    padding: 16,
+    padding: 48,
     paddingTop: 60,
   },
   title: {
     color: '#fff',
-    fontSize: 28,
+    fontSize: 42,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   subtitle: {
     color: '#999',
-    fontSize: 14,
+    fontSize: 20,
   },
   content: {
     flex: 1,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 16,
-  },
-  gridItem: {
-    width: '33.33%',
-    paddingHorizontal: 4,
-    marginBottom: 16,
-  },
   emptyText: {
     color: '#999',
-    fontSize: 16,
+    fontSize: 20,
     textAlign: 'center',
-    marginTop: 40,
-    width: '100%',
-    lineHeight: 24,
+    marginTop: 60,
+    lineHeight: 32,
   },
 });
