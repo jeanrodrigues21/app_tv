@@ -13,6 +13,7 @@ interface DoramaCardProps {
   progress?: number;
   landscape?: boolean;
   focused?: boolean;
+  onFocus?: () => void;
 }
 
 export default function DoramaCard({
@@ -21,12 +22,21 @@ export default function DoramaCard({
   showProgress,
   progress,
   focused = false,
+  onFocus,
 }: DoramaCardProps) {
   const imageUri = dorama.poster_url || 'https://via.placeholder.com/300x450';
 
   return (
-    <TVFocusableCard onPress={onPress} style={styles.card} focused={focused}>
-      <View style={styles.container}>
+    <TVFocusableCard
+      onPress={onPress}
+      style={styles.card}
+      focused={focused}
+      focusedScale={1.15}
+    >
+      <View
+        style={styles.container}
+        onTouchStart={onFocus}
+      >
         <Image
           source={{ uri: imageUri }}
           style={styles.image}
@@ -41,7 +51,7 @@ export default function DoramaCard({
 
         <View style={styles.overlay}>
           <View style={styles.playButton}>
-            <Play size={32} color="#fff" fill="#fff" />
+            <Play size={48} color="#fff" fill="#fff" />
           </View>
         </View>
       </View>
@@ -60,12 +70,12 @@ export default function DoramaCard({
 
 const styles = StyleSheet.create({
   card: {
-    width: 220,
+    width: 240,
     marginRight: 0,
   },
   container: {
     position: 'relative',
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
   },
@@ -80,14 +90,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   playButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: 'rgba(229, 9, 20, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -97,7 +107,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 4,
+    height: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   progressFill: {
@@ -106,15 +116,15 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    marginTop: 12,
+    marginTop: 14,
     textAlign: 'center',
   },
   genres: {
     color: '#999',
-    fontSize: 14,
-    marginTop: 6,
+    fontSize: 16,
+    marginTop: 8,
     textAlign: 'center',
   },
 });

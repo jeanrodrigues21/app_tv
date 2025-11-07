@@ -40,7 +40,7 @@ export function usePlatform(): PlatformInfo {
   // Detectar tablet vs mobile
   const isTablet = !isTV && (
     (screenWidth >= 768 && !isWeb) ||
-    (Platform.isPad !== undefined && Platform.isPad)
+    (isIOS && (Platform as any).isPad)
   );
 
   const isMobile = !isTV && !isTablet;

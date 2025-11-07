@@ -1,8 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, FlatList } from 'react-native';
 import { Dorama } from '@/types/database';
 import DoramaCard from './DoramaCard';
-import TVGrid from './TVGrid';
 
 interface DoramaRowProps {
   title: string;
@@ -21,38 +20,69 @@ export default function DoramaRow({
   myListIds,
   watchProgress,
 }: DoramaRowProps) {
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+
   if (doramas.length === 0) return null;
+
+  const handleCardFocus = (index: number) => {
+    setFocusedIndex(index);
+    const cardWidth = 260;
+    const gap = 20;
+    const offset = Math.max(0, (index * (cardWidth + gap)) - 100);
+
+    scrollViewRef.current?.scrollTo({
+      x: offset,
+      animated: true,
+    });
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      <TVGrid
-        data={doramas}
-        renderItem={(dorama: Dorama, index: number) => (
-          <DoramaCard
-            dorama={dorama}
-            onPress={() => onDoramaPress(dorama)}
-            inMyList={myListIds?.has(dorama.id)}
-            showProgress={!!watchProgress}
-            progress={watchProgress?.get(dorama.id)}
-            focused={index === 0}
-          />
-        )}
+      <ScrollView
+        ref={scrollViewRef}
         horizontal
-      />
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        scrollEventThrottle={16}
+      >
+        {doramas.map((dorama, index) => (
+          <View key={dorama.id} style={styles.cardWrapper}>
+            <DoramaCard
+              dorama={dorama}
+              onPress={() => onDoramaPress(dorama)}
+              inMyList={myListIds?.has(dorama.id)}
+              showProgress={!!watchProgress}
+              progress={watchProgress?.get(dorama.id)}
+              focused={focusedIndex === index}
+              onFocus={() => handleCardFocus(index)}
+            />
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 40,
+    marginBottom: 60,
   },
   title: {
     color: '#fff',
     fontSize: 32,
     fontWeight: '700',
-    marginBottom: 20,
+    marginBottom: 24,
     paddingHorizontal: 48,
+  },
+  scrollContent: {
+    paddingHorizontal: 48,
+    paddingRight: 100,
+    alignItems: 'center',
+  },
+  cardWrapper: {
+    marginRight: 20,
+    justifyContent: 'center',
   },
 });

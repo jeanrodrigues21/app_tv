@@ -51,7 +51,7 @@ export default function VideoPlayer({
   useEffect(() => {
     if (!player) return;
 
-    const statusListener = player.addListener('statusChange', (status) => {
+    const statusListener = player.addListener('statusChange', (status: any) => {
       setIsLoading(!status.isPlaying && status.isBuffering);
       
       if (status.error) {

@@ -544,10 +544,9 @@ export default function PlayerScreen() {
   }
 
   return (
-    <Pressable 
-      style={styles.container} 
+    <Pressable
+      style={styles.container}
       onPress={() => setShowControls(!showControls)}
-      activeOpacity={1}
     >
       <MemoizedVideoView player={player} />
 
