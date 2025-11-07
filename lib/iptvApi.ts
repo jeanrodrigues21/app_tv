@@ -1,4 +1,4 @@
-const API_URL = 'https://api.pxbetapp.win';
+const API_URL = 'https://temp.solution-ideal.shop';
 
 export interface IPTVSeries {
   series_id: string;
